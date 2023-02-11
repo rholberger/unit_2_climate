@@ -1,4 +1,4 @@
-ant_ice_loss = read.table("data/antarctica_mass_200204_202209.txt", skip = 31, sep = "", header = FALSE, col.names = c("decimal_date", "mass_Gt", "sigma_gt"))
+ant_ice_loss = read.table("data/antarctica_mass_200204_202209.txt", skip = 31, sep = "", header = FALSE, col.names = c("decimal_date", "mass_Gt", "sigma_Gt"))
 grn_ice_loss = read.table("data/greenland_mass_200204_202209.txt", skip=31, sep="", header = FALSE, col.names = c("decimal_date", "mass_Gt", "sigma_Gt"))  
 typeof(ant_ice_loss)
 dim(grn_ice_loss)
@@ -9,15 +9,27 @@ summary(ant_ice_loss)
 
 # Plot this Ice Jazz
 
-plot(x=ant_ice_loss$decimal_date, y=ant_ice_loss$mass_Gt, type="l", xlab="Year", ylab="Gigatonnes of Ice Lost", ylim=range(grn_ice_loss$mass_Gt))
+# Add Data Break Between Missions
+data_break = data.frame(decimal_date=2018.0, mass_Gt=NA, sigma_Gt=NA)
+data_break
 
-lines(mass_Gt~decimal_date, data=grn_ice_loss, col="red")
-lines((mass_Gt + 2*sigma_gt) ~ decimal_date, data=ant_ice_loss)
-lines((mass_Gt - 2*sigma_gt) ~ decimal_date, data=ant_ice_loss)
-
-
-
+ant_ice_loss_with_NA = rbind(ant_ice_loss, data_break) # Merge ant_ice_loss data frame with our NA point
+tail(ant_ice_loss_with_NA)
 head(ant_ice_loss)
+
+order(ant_ice_loss_with_NA$decimal_date)
+ant_ice_loss_with_NA = ant_ice_loss_with_NA[order(ant_ice_loss_with_NA$decimal_date),]
+#Repeat with Greenland data.frame
+grn_ice_loss_with_NA = rbind(grn_ice_loss, data_break) # Merge grn_ice_loss data frame with our NA point
+grn_ice_loss_with_NA = grn_ice_loss_with_NA[order(grn_ice_loss_with_NA$decimal_date),]
+
+#Now make the plot look nice:
+plot(mass_Gt ~ decimal_date, data=ant_ice_loss_with_NA, ylab="Antarctica Mass Loss (Gt)", xlab = "Year", type='l', ylim=range(grn_ice_loss_with_NA$mass_Gt, na.rm=TRUE)) +
+  lines((mass_Gt + 2*sigma_Gt) ~ decimal_date, data=ant_ice_loss_with_NA, lty="dashed")+
+  lines((mass_Gt - 2*sigma_Gt) ~ decimal_date, data=ant_ice_loss_with_NA, lty="dashed")
+  lines(mass_Gt ~ decimal_date, data=grn_ice_loss_with_NA, type='l', col='green') 
+  lines((mass_Gt + 2*sigma_Gt) ~ decimal_date, data=grn_ice_loss_with_NA, lty="dashed", col = "green")+
+    lines((mass_Gt - 2*sigma_Gt) ~ decimal_date, data=grn_ice_loss_with_NA, lty="dashed", col = "green")
 
 # Bar Plot!
 min(ant_ice_loss$mass_Gt)
@@ -25,21 +37,10 @@ max(ant_ice_loss$mass_Gt)
 tot_ice_loss_ant = min(ant_ice_loss$mass_Gt) - max(ant_ice_loss$mass_Gt)
 tot_ice_loss_grn = min(grn_ice_loss$mass_Gt) - max(grn_ice_loss$mass_Gt)
 
-pdf('figures/Ice_Mass_Trends.pdf', width=7000, height=5000)
-barplot(height=-1*c(tot_ice_loss, tot_ice_loss_grn), names.arg=c("Ant", "Grn"))
-dev.off()
-
-# Add Data Break Between Missions
+barplot(height=c(min(ant_ice_loss$mass_Gt), min(grn_ice_loss$mass_Gt)))
 
 
-head(ant_ice_loss)
-data_break = data.frame(decimal_date=2018.0, mass_Gt=NA, sigma_gt=NA)
-data_break
-ant_ice_loss_with_NA = rbind(ant_ice_loss, data_break)
 
-order(ant_ice_loss$decimal_date)
-ant_ice_loss_with_NA = ant_ice_loss_with_NA[order(ant_ice_loss_with_NA$decimal_date),]
-?order()
 
 #Januaryt 26, 2023 - Now for Some Boolean logic!
 vec=c(1,5,2,1)
